@@ -1,6 +1,7 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using System;
 
 namespace AnimalHunter
 {
@@ -80,6 +81,43 @@ namespace AnimalHunter
 
             // TODO: Add your update logic here
 
+            // Make our hunter chase the prey
+            // (if it isn't already on top of our prey)
+            if (hunterPosition != preyPosition)
+            {
+
+                // Vector subtraction, normalisation, scalar multiply, addition
+                // Determine a direction using target vector minus current vector positions
+                Vector2 direction = preyPosition - hunterPosition;
+                // Determine how far we are from our target
+                float distanceToTarget = direction.Length();
+                // This is not length 1! (aka unit vector) - we need to normalise it
+                // (this means dividing by the magnitude, but XNA does this for us)
+                // This keeps the vector pointing in the same direction, but sets length to 1
+                direction.Normalize();
+                // We need a scalar to multiply our vector by to represent how far we are moving
+                float speed = 100f; // How far we are moving in pixels per second
+                                    // Determine how far the hunter should move this frame by multiplying speed by time passed this frame
+                float pixelsToMove = speed * (float)gameTime.ElapsedGameTime.TotalSeconds;
+
+                // Check if we are overshooting
+                // If we will move farther than the actual distance to our target, then we are overshooting
+                if (pixelsToMove >= distanceToTarget)
+                {
+                    // We would overshoot, so instead, just move to the target's positoin
+                    hunterPosition = preyPosition;
+                }
+                else
+                {
+                    // We are not overshooting (have some ways to go first)
+
+                    // Generate our movement vector by scaling up our length 1 direction vector using our distance to move
+                    Vector2 moveVector = direction * pixelsToMove;
+                    // Add the move vector to the hunter's positoin to move the hunter based on the move vector
+                    hunterPosition = hunterPosition + moveVector;
+                }
+            }
+
             base.Update(gameTime);
         }
 
@@ -112,8 +150,12 @@ namespace AnimalHunter
 
             // Draw Hunter Sprite
             // - using vector positoining
-            float hunterRotation = 0;
-            Vector2 hunterOrigin = Vector2.Zero;
+            // First determine direction based on vector subtraction
+            Vector2 direction = preyPosition - hunterPosition;
+            // Then determine angle using atan (arctangent aka inverse tangent)
+            float hunterRotation = (float)(Math.Atan2(direction.Y, direction.X) + Math.PI * 0.5);
+            // Calculate origin to be centre of the sprite
+            Vector2 hunterOrigin = new Vector2(hunterTexture.Width / 2, hunterTexture.Height / 2);
             Rectangle hunterRect = new Rectangle((int)hunterPosition.X, (int)hunterPosition.Y, hunterTexture.Width, hunterTexture.Height);
             spriteBatch.Draw(hunterTexture,
                 hunterRect,
